@@ -37,6 +37,7 @@ src/
 - Quem está na mesma guarnição trabalha nos mesmos dias (início do ciclo por guarnição, até 4 guarnições).
 - Meta mensal = 5,7 h x dias do mês, arredondada para cima; cada dia afastado reduz 5,7 h.
 - Depois de um plantão de 24h há 12h de descanso; os turnos menores vão de preferência no dia seguinte.
+- Na grade, a linha de uma função é completada até 24h antes de abrir outra linha da mesma função.
 - Plantões que passam da meta viram horas extraordinárias e saem da cota.
 - Cota restante = cota total - HE já lançadas; a divisão é igual em R$ entre quem não teve a cota (em horas) editada.
 - Por dia: um chefe de socorro (o de maior graduação) e um condutor; o excedente assume função de linha
