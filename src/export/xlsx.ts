@@ -1,7 +1,7 @@
 // @ts-nocheck
 import ExcelJS from 'exceljs';
 import {GR,LET} from '../core/constants';
-import {FORD} from '../core/escala';
+import {FORD,funcoes24} from '../core/escala';
 
 // Gera o .xlsx (folhas MapaDeHoras, Escala e Carga horária) e baixa no navegador.
 export async function exportXlsx(R){
@@ -45,16 +45,27 @@ export async function exportXlsx(R){
     ws.views=[{state:'frozen',xSplit:4,ySplit:2}];
     ws.pageSetup={orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0};
     
-    const w3=wb.addWorksheet('Escala'),E3=SS(w3),mp=R.map;
+    const w3=wb.addWorksheet('Escala'),E3=SS(w3),mp=R.map,c24=funcoes24(mp,D);
+    const hf=h=>String(Math.round(h*100)/100).replace('.',',');
     w3.mergeCells(1,1,1,D+1);E3(1,1,'ESCALA DE SERVIÇO - '+new Date(y,m,1).toLocaleString('pt-BR',{month:'long'}).toUpperCase()+'/'+y,{b:1,sz:13});
     E3(2,1,'Função do dia',{b:1,f:'FF999999'});for(let d=0;d<D;d++)E3(2,2+d,d+1,{b:1,f:'FF999999'});
     let q3=3;
-    [...FORD,'AFAST'].filter(f=>mp[f]).forEach(f=>mp[f].forEach((row,j)=>{
-      E3(q3,1,j?'':(f==='AFAST'?'AFASTAMENTOS':(f||'SEM FUNÇÃO')),{b:1,al:'left',f:'FFEFEFEF'});
-      for(let d=0;d<D;d++){const o=row[d],w=new Date(y,m,d+1).getDay();
-        if(o)E3(q3,2+d,o.txt.join('\n'),{b:1,wrap:1,sz:9,f:o.cls==='FER'?'FFFFE599':(o.cls==='LTS'||o.cls==='LGL')?'FFC9DAF8':o.cls==='y'?'FFFFFF00':o.cls==='x'?'FFFFF2CC':'FFFFFFFF'});
-        else E3(q3,2+d,undefined,{f:(w===0||w===6)?'FFD9D9D9':'FFFFFFFF'});}
-      w3.getRow(q3).height=54;q3++;}));
+    [...FORD,'AFAST'].filter(f=>mp[f]).forEach(f=>{
+      mp[f].forEach((row,j)=>{
+        E3(q3,1,j?'':(f==='AFAST'?'AFASTAMENTOS':(f||'SEM FUNÇÃO')),{b:1,al:'left',f:'FFEFEFEF'});
+        for(let d=0;d<D;d++){const o=row[d],w=new Date(y,m,d+1).getDay();
+          if(o)E3(q3,2+d,o.txt.join('\n'),{b:1,wrap:1,sz:9,f:o.cls==='FER'?'FFFFE599':(o.cls==='LTS'||o.cls==='LGL')?'FFC9DAF8':o.cls==='y'?'FFFFFF00':o.cls==='x'?'FFFFF2CC':'FFFFFFFF'});
+          else E3(q3,2+d,undefined,{f:(w===0||w===6)?'FFD9D9D9':'FFFFFFFF'});}
+        w3.getRow(q3).height=54;q3++;});
+      if(f==='AFAST'||!c24[f])return;
+      // Conferência: 24h fechadas (✓) ou o total que falta (✗) em cada dia.
+      E3(q3,1,'Conferência 24h',{al:'left',sz:9,col:'FF6B7280',f:'FFEFEFEF'});
+      for(let d=0;d<D;d++){
+        const c=c24[f][d],icone=c.conflito?'⚠':c.ok?'✓':'✗';
+        E3(q3,2+d,c.h>0?`${hf(c.h)}h ${icone}`:undefined,{b:1,sz:9,col:c.h<=0?undefined:(c.conflito?'FF8A5A00':c.ok?'FF137333':'FFA50E0E'),f:c.h<=0?'FFFFFFFF':(c.conflito?'FFFFF3CD':c.ok?'FFE6F4EA':'FFFCE8E6')});
+      }
+      w3.getRow(q3).height=16;q3++;
+    });
     w3.getColumn(1).width=30;for(let d=0;d<D;d++)w3.getColumn(2+d).width=14;
     w3.views=[{state:'frozen',xSplit:1,ySplit:2}];w3.pageSetup={orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0};
     const w2=wb.addWorksheet('Carga horária');

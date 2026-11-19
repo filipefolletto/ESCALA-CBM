@@ -1,5 +1,5 @@
 import { GR, LET, fmt, brl } from '../core/constants';
-import { FORD } from '../core/escala';
+import { FORD, funcoes24 } from '../core/escala';
 
 const wkDe = (R: any) => (d: number) => { const w = new Date(R.y, R.m, d + 1).getDay(); return w === 0 || w === 6; };
 
@@ -8,6 +8,8 @@ export function Stats({ R }: { R: any }) {
     ['Horas ordinárias (todos)', fmt(R.ordTot) + ' h'], ['Cota total', brl(R.cota)], ['HE já lançadas', brl(R.heja)],
     ['Cota restante', brl(R.rest)], ['Cota por pessoa (automáticas)', brl(R.per)],
     ['Cotas editadas', `${R.nEd} pessoa(s) · ${brl(R.edCost)}`], ['HE distribuídas', brl(R.heVal)],
+    ['Turnos realocados para fechar 24h', String(R.comp?.trocas ?? 0)],
+    ['Funções/dia ainda com falta', String(R.lac?.length ?? 0)],
   ];
   return (
     <div className="stats">
@@ -17,9 +19,10 @@ export function Stats({ R }: { R: any }) {
 }
 
 export function EscalaTable({ R }: { R: any }) {
-  const wk = wkDe(R), mp = R.map;
+  const wk = wkDe(R), mp = R.map, c24 = funcoes24(mp, R.D);
   const chaves = [...FORD, 'AFAST'].filter((f) => mp[f]);
   const dias = Array.from({ length: R.D }, (_, d) => d);
+  const hf = (h: number) => String(Math.round(h * 100) / 100).replace('.', ',');
   return (
     <table className="m" id="escala">
       <thead>
@@ -29,15 +32,36 @@ export function EscalaTable({ R }: { R: any }) {
         </tr>
       </thead>
       <tbody>
-        {chaves.flatMap((f) => mp[f].map((row: any[], j: number) => (
-          <tr key={f + j}>
-            <td className="base nm">{j ? '' : f === 'AFAST' ? 'AFASTAMENTOS' : f || 'SEM FUNÇÃO'}</td>
-            {dias.map((d) => {
-              const o = row[d];
-              return <td key={d} className={'c ' + (o ? o.cls : wk(d) ? 'g' : 'w')}>{o?.txt.map((t: string, i: number) => <div key={i}>{t}</div>)}</td>;
-            })}
-          </tr>
-        )))}
+        {chaves.flatMap((f) => {
+          const linhas = mp[f].map((row: any[], j: number) => (
+            <tr key={f + j}>
+              <td className="base nm">{j ? '' : f === 'AFAST' ? 'AFASTAMENTOS' : f || 'SEM FUNÇÃO'}</td>
+              {dias.map((d) => {
+                const o = row[d];
+                return <td key={d} className={'c ' + (o ? o.cls : wk(d) ? 'g' : 'w')}>{o?.txt.map((t: string, i: number) => <div key={i}>{t}</div>)}</td>;
+              })}
+            </tr>
+          ));
+          if (f === 'AFAST' || !c24[f]) return linhas;
+          // Conferência: total de horas da função no dia; 24h = função fechada.
+          return [...linhas, (
+            <tr key={f + '24'} className="tot">
+              <td className="base nm">Conferência 24h</td>
+              {dias.map((d) => {
+                const c = c24[f][d];
+                const cls = c.h <= 0 ? 'w' : c.conflito ? 'conf' : c.ok ? 'ok' : 'no';
+                const icone = c.conflito ? '⚠' : c.ok ? '✓' : '✗';
+                const falta = c.h > 0 && !c.ok ? `Faltam ${hf(24 - c.h)} h` : '';
+                const titulo = c.conflito ? ['Conflito de horário na função', falta].filter(Boolean).join(' · ') : (falta || undefined);
+                return (
+                  <td key={d} className={'c ' + cls} title={titulo}>
+                    {c.h > 0 ? `${hf(c.h)}h ${icone}` : ''}
+                  </td>
+                );
+              })}
+            </tr>
+          )];
+        })}
       </tbody>
     </table>
   );

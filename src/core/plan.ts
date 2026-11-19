@@ -2,12 +2,13 @@ import { GR, num, fmt, brl } from './constants';
 import { build, dias } from './schedule';
 import { roles, cover } from './roles';
 import { escalaMap } from './escala';
+import { completar24, lacunas } from './completar';
 
 export interface Pessoa { id: number; n: string; idf: string; gr: number; g: string; f: string; ch: string }
 export interface Item { n: string; t?: string; d: string }
 export interface Entrada {
   mes: string; cota: number; heja: number; vh: number[];
-  pessoas: Pessoa[]; afs: Item[]; cxs: Item[];
+  pessoas: Pessoa[]; afs: Item[]; cxs: Item[]; semCompletar?: boolean;
 }
 
 // Passos: 1) escala ordinária por pessoa; 2) meta de 5,7 h/dia; 3) soma das ordinárias;
@@ -52,14 +53,21 @@ export function planejar(inp: Entrada): any | null {
   const heVal = pes.reduce((a, x) => a + x.hX * x.vh, 0);
   const pesM = [...pes].sort((a, b) => (a.gr - b.gr) || (a.i - b.i));
   const RL = roles(pesM, D);
+  // Escala 1 dia para 3 pronta: agora usa a carga já distribuída de cada pessoa
+  // para fechar as 24h de cada função, movendo turnos (sem criar horas novas).
+  const comp = inp.semCompletar ? { trocas: 0 } : completar24(pesM, D, RL);
+  const map = escalaMap(pesM, D, RL);
+  const lac = lacunas(map, D);
   return {
     pes, pesM, D, y, m, vh: inp.vh, cota: inp.cota, heja: inp.heja, rest, per, ordTot, heVal, nEd, edCost,
-    RL, cv: cover(pesM, D, RL), map: escalaMap(pesM, D, RL),
+    RL, cv: cover(pesM, D, RL), map, comp, lac,
   };
 }
 
 export function avisos(R: any): string[] {
   const av: string[] = [];
+  if (R.comp?.trocas) av.push(`${R.comp.trocas} turno(s) da própria carga das pessoas foram reposicionados para completar as 24h das funções (nenhuma hora nova foi criada).`);
+  if (R.lac?.length) av.push(`Ainda faltam horas em ${R.lac.length} função(ões)/dia após a realocação: não há horas suficientes na carga das pessoas ou os horários já estão ocupados.`);
   if (R.edCost > R.rest) av.push(`As cotas editadas (${brl(R.edCost)}) passam da cota restante (${brl(R.rest)}): as demais pessoas ficam sem horas extras.`);
   GR.forEach((g, k) => { if (R.pes.some((x) => x.gr === k) && !R.vh[k]) av.push(`Informe o valor da hora de ${g}: sem ele não há horas extras para essa graduação.`); });
   R.pes.forEach((x) => {

@@ -41,7 +41,17 @@ export function build(off,D,abs,xd){
   const st24b=d=>sh.some(x=>x.b===24&&!x.ex&&x.s>=0&&Math.floor(x.s/24)===d);
   const isEx=d=>sh.some(x=>x.ex&&x.b===24&&x.s>=0&&Math.floor(x.s/24)===d);
   const hasXp=d=>sh.some(x=>x.t==='x'&&x.b!==24&&ov(x,d)>0);
+  // Turnos crus (horas corridas), para a grade usar os horários reais.
+  // Devolve as referências internas para que um turno possa ser reposicionado
+  // pelo complemento de 24h (o total de horas da pessoa não muda).
+  const segs=()=>sh;
+  const mover=(g,s)=>{
+    if(!g||s<0||s+g.b>L)return false;
+    const i=sh.indexOf(g);if(i<0)return false;
+    sh.splice(i,1);
+    if(!free(s,s+g.b)){sh.splice(i,0,g);return false;}
+    g.s=s;g.e=s+g.b;sh.push(g);return true;};
   const starts=d=>sh.some(x=>x.s>=0&&Math.floor(x.s/24)===d);
   const tail=d=>sh.some(x=>x.b!==24&&x.s>=0&&Math.floor(x.s/24)===d-1&&x.e>24*d);
-  return{meta,put,cells,y24,hrs,desc,st24,st24b,xfail,isEx,hasXp,starts,tail,ph:d=>sh.filter(x=>x.b!==24).reduce((a,x)=>a+ov(x,d),0),carry:()=>sh.some(x=>x.s<0)};
+  return{meta,put,mover,cells,y24,hrs,desc,st24,st24b,xfail,isEx,hasXp,segs,starts,tail,ph:d=>sh.filter(x=>x.b!==24).reduce((a,x)=>a+ov(x,d),0),carry:()=>sh.some(x=>x.s<0)};
 }

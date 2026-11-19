@@ -14,6 +14,7 @@ button{font:inherit;border:0;border-radius:8px;padding:8px 14px;cursor:pointer;b
 button.sec{background:transparent;color:var(--a);border:1px solid var(--a)}
 button:disabled{opacity:.45;cursor:not-allowed}
 .acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.acts label input[type=checkbox]{width:auto;padding:0;margin:0;accent-color:var(--a)}
 .vh{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
 .p{display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap}
 .p>*{flex:1 1 120px;width:auto}.p .nm{flex:2 1 200px}.p .id{flex:1 1 90px}.p .fn{flex:2 1 200px}.p button{flex:0 0 auto;padding:6px 11px}
@@ -33,6 +34,11 @@ table.m{border-collapse:collapse;font:11px Arial,sans-serif;color:var(--tx);min-
 .m td.base{background:#efefef;color:#111}
 #escala td.c{white-space:normal;min-width:92px;font-size:10px;line-height:1.2}
 #escala td.c i{display:block;font-size:8px;font-weight:400}
+#escala tr.tot td{font-size:9px;font-weight:700;height:16px}
+#escala tr.tot td.base{font-weight:400;color:var(--mut);text-align:left;font-size:9px}
+#escala tr.tot td.ok{background:#e6f4ea;color:#137333}
+#escala tr.tot td.no{background:#fce8e6;color:#a50e0e}
+#escala tr.tot td.conf{background:#fff3cd;color:#8a5a00}
 .leg{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--mut)}
 .leg i{display:inline-block;width:14px;height:14px;border:1px solid var(--bd);vertical-align:-3px;margin-right:4px}
 .warn{color:var(--warn);font-size:12px;margin-top:8px}

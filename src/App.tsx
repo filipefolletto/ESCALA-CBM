@@ -26,6 +26,7 @@ export default function App() {
   const [pessoas, setPessoas] = useState<Pessoa[]>(DEMO);
   const [afs, setAfs] = useState<Item[]>([]);
   const [cxs, setCxs] = useState<Item[]>([]);
+  const [completar, setCompletar] = useState(true);
   const [painel, setPainel] = useState<'af' | 'cx' | null>(null);
   const [R, setR] = useState<any>(null);
   const [msg, setMsg] = useState('');
@@ -36,7 +37,7 @@ export default function App() {
     setPessoas((ps) => ps.map((p) => (p.id === id ? { ...p, [campo]: v } : p)));
 
   const gerar = () => {
-    const res = planejar({ mes, cota: num(cota), heja: num(heja), vh: vh.map(num), pessoas, afs, cxs });
+    const res = planejar({ mes, cota: num(cota), heja: num(heja), vh: vh.map(num), pessoas, afs, cxs, semCompletar: !completar });
     if (!res) { setMsg('Adicione ao menos uma pessoa e informe o mês.'); return; }
     setMsg(''); setR(res);
   };
@@ -96,6 +97,10 @@ export default function App() {
             onAdd={(i) => setAfs((l) => [...l, i])} onRemove={(i) => setAfs((l) => l.filter((_, k) => k !== i))} />
         )}
         <div className="acts">
+          <label style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <input type="checkbox" checked={completar} onChange={(e) => setCompletar(e.target.checked)} />
+            Completar 24h realocando turnos da própria carga
+          </label>
           <button onClick={gerar}>Gerar escala</button>
           <button className="sec" disabled={!R} onClick={baixar}>Baixar .xlsx</button>
         </div>
@@ -109,7 +114,11 @@ export default function App() {
             <Stats R={R} />
             <div className="warn">{avisos(R).map((a, i) => <div key={i}>{a}</div>)}</div>
           </div>
-          <div className="card"><h2>Escala (uma guarnição por dia)</h2><div className="scroll"><EscalaTable R={R} /></div></div>
+          <div className="card">
+            <h2>Escala (uma guarnição por dia)</h2>
+            <div className="scroll"><EscalaTable R={R} /></div>
+            <div className="leg"><span>Cada pessoa aparece uma vez por dia, do primeiro ao último turno.</span><span>Conferência 24h por função: ✓ fechou 24h · ✗ não fechou · ⚠ conflito de horário</span></div>
+          </div>
           <div className="card">
             <h2>Mapa de horas</h2>
             <div className="scroll"><MapaTable R={R} /></div>
