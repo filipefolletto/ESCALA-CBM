@@ -70,6 +70,9 @@ export function EscalaTable({ R }: { R: any }) {
 export function MapaTable({ R }: { R: any }) {
   const wk = wkDe(R), pes = R.pesM;
   const dias = Array.from({ length: R.D }, (_, d) => d);
+  // Os totais vêm das próprias linhas do mapa: "Mês" soma a linha de cima
+  // (Ordinárias) e "Ext." soma a linha de baixo (Extraordinárias).
+  const soma = (v: number[]) => v.reduce((a, b) => a + (b || 0), 0);
   return (
     <table className="m" id="mapa">
       <thead>
@@ -93,10 +96,10 @@ export function MapaTable({ R }: { R: any }) {
               const cls = c ? c : v > 0 ? (x.P.y24[d] ? 'y' : 'w') : wk(d) ? 'g' : 'w';
               return <td key={d} className={'c ' + cls}>{c || (v > 0 ? fmt(v) : '')}</td>;
             })}
-            <td rowSpan={2}>{x.P.meta}</td>
-            <td rowSpan={2}>{brl(x.hX * x.vh)}</td>
-            <td rowSpan={2}>{fmt(x.hX)}</td>
-            <td rowSpan={2}><b>{fmt(x.hO + x.hX)}</b></td>
+            <td rowSpan={2}>{fmt(soma(x.ord))}</td>
+            <td rowSpan={2}>{brl(soma(x.ext) * x.vh)}</td>
+            <td rowSpan={2}>{fmt(soma(x.ext))}</td>
+            <td rowSpan={2}><b>{fmt(soma(x.ord) + soma(x.ext))}</b></td>
             <td rowSpan={2}>{x.cotaH}</td>
           </tr>,
           <tr key={x.n + 'x'}>

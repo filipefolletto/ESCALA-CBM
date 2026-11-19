@@ -47,3 +47,15 @@ describe('afastamentos', () => {
     expect(ciro.P.meta).toBe(Math.ceil((342 * (31 - 15)) / 60 - 1e-9));
   });
 });
+
+describe('totais exibidos no mapa de horas', () => {
+  it('Mês vem da soma das ordinárias e Ext. (R$) da soma das extraordinárias', () => {
+    const R = planejar(entrada({ afs: [{ n: 'CIRO', t: 'FER', d: '10-24' }] })) as any;
+    const soma = (v: number[]) => v.reduce((a, b) => a + b, 0);
+    R.pesM.forEach((x: any) => {
+      expect(soma(x.ord)).toBeCloseTo(x.hO, 6);
+      expect(soma(x.ext)).toBeCloseTo(x.hX, 6);
+      expect(soma(x.ext) * x.vh).toBeCloseTo(x.hX * x.vh, 6);
+    });
+  });
+});

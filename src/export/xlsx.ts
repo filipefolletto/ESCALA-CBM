@@ -6,6 +6,8 @@ import {FORD,funcoes24} from '../core/escala';
 // Gera o .xlsx (folhas MapaDeHoras, Escala e Carga horária) e baixa no navegador.
 export async function exportXlsx(R){
   const pes=R.pesM,D=R.D,y=R.y,m=R.m;
+  // Totais calculados a partir das linhas do mapa (Ordinárias / Extraordinárias).
+  const soma=a=>a.reduce((s,v)=>s+(v||0),0);
   const wb=new ExcelJS.Workbook(),ws=wb.addWorksheet('MapaDeHoras');
     const th={style:'thin',color:{argb:'FF000000'}},bx={top:th,left:th,bottom:th,right:th};
     const F=a=>({type:'pattern',pattern:'solid',fgColor:{argb:a}});
@@ -28,11 +30,11 @@ export async function exportXlsx(R){
         if(c)S(r,c0+d,c,{b:1,f:c==='FER'?'FFFFE599':'FFC9DAF8'});
         else S(r,c0+d,v>0?v:undefined,{b:v>0,f:v>0?(x.P.y24[d]?'FFFFFF00':'FFFFFFFF'):(we?'FFD9D9D9':'FFFFFFFF'),nf:'0.0#'});
         S(r+1,c0+d,e>0?e:undefined,{f:e>0?'FFFFF2CC':(we?'FFD9D9D9':'FFFFFFFF'),nf:'0.0#'});}
-      const L1=colL(c0),L2=colL(c0+D-1);
-      ws.mergeCells(r,cM,r+1,cM);S(r,cM,x.P.meta);S(r+1,cM);
-      ws.mergeCells(r,cH,r+1,cH);S(r,cH,{formula:`SUM(${L1}${r+1}:${L2}${r+1})`,result:x.hX});S(r+1,cH);
-      ws.mergeCells(r,cR,r+1,cR);S(r,cR,{formula:`${colL(cH)}${r}*$C$${vr0+1+x.gr}`,result:x.hX*x.vh},{nf:BRL});S(r+1,cR);
-      ws.mergeCells(r,cT,r+1,cT);S(r,cT,{formula:`SUM(${L1}${r}:${L2}${r})+${colL(cH)}${r}`,result:x.hO+x.hX},{b:1});S(r+1,cT);
+      const L1=colL(c0),L2=colL(c0+D-1),ord=soma(x.ord),ext=soma(x.ext);
+      ws.mergeCells(r,cM,r+1,cM);S(r,cM,{formula:`SUM(${L1}${r}:${L2}${r})`,result:ord},{nf:'0.0#'});S(r+1,cM);
+      ws.mergeCells(r,cH,r+1,cH);S(r,cH,{formula:`SUM(${L1}${r+1}:${L2}${r+1})`,result:ext});S(r+1,cH);
+      ws.mergeCells(r,cR,r+1,cR);S(r,cR,{formula:`SUM(${L1}${r+1}:${L2}${r+1})*$C$${vr0+1+x.gr}`,result:ext*x.vh},{nf:BRL});S(r+1,cR);
+      ws.mergeCells(r,cT,r+1,cT);S(r,cT,{formula:`SUM(${L1}${r}:${L2}${r})+SUM(${L1}${r+1}:${L2}${r+1})`,result:ord+ext},{b:1});S(r+1,cT);
       ws.mergeCells(r,cC,r+1,cC);S(r,cC,x.cotaH);S(r+1,cC);
       rc.push(`${colL(cR)}${r}`);r+=3;});
     S(vr0,2,'Nível',{b:1,f:'FF999999'});S(vr0,3,'VALOR HE (R$/h)',{b:1,f:'FF999999'});
